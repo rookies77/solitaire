@@ -9,7 +9,6 @@ public class Distributeur extends TasMain {
 	public Distributeur() {
 		super(creationPaquet());
 		this.melangerPaquet();
-//		this.distribColonnes();
 	}
 
 	public static ArrayList<Carte> creationPaquet() {
