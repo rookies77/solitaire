@@ -1,12 +1,12 @@
-// Vincent WONG 2025
+// // Vincent WONG 2025
 
-public class SolitaireGame {
+// public class SolitaireGame {
 
-	public static void main(String[] args) {
+// 	public static void main(String[] args) {
 
-		InterfaceConsole game = new InterfaceConsole();
-		game.jouer();
-	}
+// 		InterfaceConsole game = new InterfaceConsole();
+// 		game.jouer();
+// 	}
 
 
-}
+// }

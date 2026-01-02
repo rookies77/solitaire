@@ -7,20 +7,27 @@ import java.util.List;
 public class Colonne extends TasMain {
 	private ArrayList<Carte> colonneVisible = new ArrayList<>();
 
-	public Colonne(ArrayList<Carte> card) {
-		super(card);
-		this.updateColonneVisible();
+	public Colonne(ArrayList<Carte> cartesCachees) {
+		super(); // Crée un paquet vide
+		// Ajoute les cartes cachées au paquet
+		for (Carte carte : cartesCachees) {
+			super.addCard(carte);
+		}
+		// Ne retourne une carte que s'il y en a
+		if (this.getLongueurPaquet() > 0) {
+			this.updateColonneVisible();
+		}
 	}
 
 	@Override
 	public void addCard(Carte card) { // Ajoute une carte dans colonneVisible si possible
     // Colonne visible non-vide
     if (this.colonneVisible.size() > 0) {
-        Carte lastCard = this.getColonneVisible().get(0);
+        Carte lastCard = this.colonneVisible.get(0);
         if (card.estJusteEnDessousDe(lastCard) && card.getCouleur() != lastCard.getCouleur()) {
             this.colonneVisible.add(0, card);
         } else {
-            throw new Error("Carte " + card + " ne peut pas être placée sur " + lastCard);
+            throw new IllegalArgumentException("Carte " + card + " ne peut pas être placée sur " + lastCard);
         }
     } 
     // Colonne complètement vide (visible + cachée)
@@ -28,28 +35,28 @@ public class Colonne extends TasMain {
         if (card.getValeur() == Carte.valeurCarte.roi) {
             this.colonneVisible.add(0, card);
         } else {
-            throw new Error("Seul un Roi peut être placé sur une colonne vide");
+            throw new IllegalArgumentException("Seul un Roi peut être placé sur une colonne vide");
         }
     } 
     // Colonne visible vide MAIS cartes cachées présentes
     else {
-        throw new Error("Impossible d'ajouter sur une colonne ");
+        throw new IllegalStateException("Impossible d'ajouter sur une colonne avec cartes cachées sans carte visible");
     }
 }
 	protected boolean addListCard(List<Carte> listCardExt) {
 		Carte derniereCarteDuPaquet = listCardExt.get(listCardExt.size() - 1);
-		Carte carteVisibleColonne = this.getColonneVisible().get(0);
+		Carte carteVisibleColonne = this.colonneVisible.get(0);
 
 		if (derniereCarteDuPaquet.estJusteEnDessousDe(carteVisibleColonne)
 				&& derniereCarteDuPaquet.getCouleur() != carteVisibleColonne.getCouleur()) {
-			this.getColonneVisible().addAll(0,listCardExt);
+			this.colonneVisible.addAll(0,listCardExt);
 			listCardExt.clear();
 			if (this.colonneVisible.isEmpty() && this.getLongueurPaquet() > 0) {
 				this.updateColonneVisible();
 			}
 			return true;
 		} else {
-			throw new Error("Ajout impossible methode addListCard");
+			throw new IllegalArgumentException("Ajout impossible : les cartes ne respectent pas l'ordre");
 
 		}
 
@@ -59,10 +66,10 @@ public class Colonne extends TasMain {
 		if (listCardExt.isEmpty()) {
 			return false;
 		}
-		if (this.getColonneVisible().isEmpty()) {
+		if (this.colonneVisible.isEmpty()) {
 			return listCardExt.get(listCardExt.size() - 1).getValeur() == Carte.valeurCarte.roi;
 		}
-		Carte carteVisibleColonne = this.getColonneVisible().get(0);
+		Carte carteVisibleColonne = this.colonneVisible.get(0);
 		Carte derniereCarte = listCardExt.get(listCardExt.size() - 1);
 
 		return derniereCarte.estJusteEnDessousDe(carteVisibleColonne)
@@ -81,17 +88,41 @@ public class Colonne extends TasMain {
 		}
 	}
 
-	protected ArrayList<Carte> getColonneVisible() { // Retourne le tableau de colonneVisible
+	// Méthodes d'accès sécurisé (ne retournent pas la liste directement)
+	
+	public boolean estColonneVisibleVide() {
+		return this.colonneVisible.isEmpty();
+	}
+	
+	public int getTailleColonneVisible() {
+		return this.colonneVisible.size();
+	}
+	
+	public Carte getCarteVisibleAuSommet() {
+		if (this.colonneVisible.isEmpty()) {
+			return null;
+		}
+		return this.colonneVisible.get(0);
+	}
+	
+	public Carte getCarteVisibleAt(int index) {
+		if (index >= 0 && index < this.colonneVisible.size()) {
+			return this.colonneVisible.get(index);
+		}
+		return null;
+	}
+	
+	// Méthode interne pour usage dans la classe (protected)
+	protected ArrayList<Carte> getColonneVisibleInterne() {
 		return this.colonneVisible;
 	}
 
 	public void updateColonneVisible() { // si la colonnevisible est vide, elle prend une carte de la pioche
 		if (this.getLongueurPaquet() != 0) {
 			Carte carteSommetColonneCachee = this.pullCard();
-			this.getColonneVisible().add(0, carteSommetColonneCachee);
-			;
+			this.colonneVisible.add(0, carteSommetColonneCachee);
 		} else {
-			throw new Error("il n'y a plus de carte à ajouter");
+			throw new IllegalStateException("Il n'y a plus de carte cachée à retourner");
 		}
 	}
 

@@ -24,7 +24,7 @@ public class InterfaceConsole {
       int choix = scanner.nextInt();
       switch (choix) {
         case 1:
-          plateau.pioche.pullCardAndAddDefausse();
+          plateau.getPioche().pullCardAndAddDefausse();
           break;
         case 2:
           this.afficherPlateau("=== PLATEAU ===");
@@ -44,31 +44,31 @@ public class InterfaceConsole {
 
   private void afficherPlateau(String text) {
     System.out.println(text);
-    for (int i = 0; i < plateau.listColonne.size(); i++) {
-      System.out.println((i + 1) + "- Colonne " + (i + 1) + ": " + plateau.listColonne.get(i));
+    for (int i = 0; i < plateau.getNombreColonnes(); i++) {
+      System.out.println((i + 1) + "- Colonne " + (i + 1) + ": " + plateau.getColonne(i));
     }
-    for (int i = 0; i < plateau.listPieux.size(); i++) {
-      System.out.println((i + 8) + "- Pieux " + (i + 1) + ": " + plateau.listPieux.get(i));
+    for (int i = 0; i < plateau.getNombrePieux(); i++) {
+      System.out.println((i + 8) + "- Pieux " + (i + 1) + ": " + plateau.getPieux(i));
     }
-    System.out.println("12- Défausse: " + plateau.pioche.defausse.getSommetCard());
+    System.out.println("12- Défausse: " + plateau.getPioche().getDefausse().getSommetCard());
   }
 
   private void prendreUneCarte() {
     this.afficherPlateau("=== PLATEAU === : Prendre une carte");
     System.out.println("\nQuel carte voulez vous deplacer ?");
-    for (int i = 0; i < plateau.listColonne.size(); i++) {
-      if (!plateau.listColonne.get(i).getColonneVisible().isEmpty()) {
+    for (int i = 0; i < plateau.getNombreColonnes(); i++) {
+      if (!plateau.getColonne(i).estColonneVisibleVide()) {
         System.out
-            .println((i + 1) + "- Colonne " + (i + 1) + " -- " + plateau.listColonne.get(i).getColonneVisible().get(0));
+            .println((i + 1) + "- Colonne " + (i + 1) + " -- " + plateau.getColonne(i).getCarteVisibleAuSommet());
       }
     }
-    for (int i = 0; i < plateau.listPieux.size(); i++) {
-      if (plateau.listPieux.get(i).getLongueurPaquet() > 0) {
-        System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- " + plateau.listPieux.get(i).getSommetCard());
+    for (int i = 0; i < plateau.getNombrePieux(); i++) {
+      if (plateau.getPieux(i).getLongueurPaquet() > 0) {
+        System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- " + plateau.getPieux(i).getSommetCard());
       }
     }
-    if (plateau.pioche.defausse.getLongueurPaquet() > 0) {
-      System.out.println("12- Defausse" + " " + plateau.pioche.defausse.getSommetCard());
+    if (plateau.getPioche().getDefausse().getLongueurPaquet() > 0) {
+      System.out.println("12- Defausse" + " " + plateau.getPioche().getDefausse().getSommetCard());
     }
 
     System.out.println("13- revenir en arriere");
@@ -80,40 +80,40 @@ public class InterfaceConsole {
     Carte cardSelected;
     try {
       if (choix >= 1 && choix <= 7) {
-        if (plateau.listColonne.get(choix - 1).getColonneVisible().isEmpty()) {
+        if (plateau.getColonne(choix - 1).estColonneVisibleVide()) {
           this.prendreUneCarte();
         } else {
-          cardSelected = plateau.listColonne.get(choix - 1).getColonneVisible().get(0);
+          cardSelected = plateau.getColonne(choix - 1).getCarteVisibleAuSommet();
           if(!this.placerUneCarte(cardSelected)) {
             return;
           }
-          plateau.listColonne.get(choix - 1).pullCardColonneVisible();
+          plateau.getColonne(choix - 1).pullCardColonneVisible();
 
-          if (plateau.listColonne.get(choix - 1).getColonneVisible().isEmpty() &&
-              plateau.listColonne.get(choix - 1).getLongueurPaquet() > 0) {
-            plateau.listColonne.get(choix - 1).updateColonneVisible();
+          if (plateau.getColonne(choix - 1).estColonneVisibleVide() &&
+              plateau.getColonne(choix - 1).getLongueurPaquet() > 0) {
+            plateau.getColonne(choix - 1).updateColonneVisible();
           }
           System.out.println("Ajout avec succès dans la colonne " + choix);
         }
       } else if (choix >= 8 && choix <= 11) {
         int pieuxIndex = choix - 8;
-        if (plateau.listPieux.get(pieuxIndex).getLongueurPaquet() == 0) {
+        if (plateau.getPieux(pieuxIndex).getLongueurPaquet() == 0) {
           this.prendreUneCarte();
           System.out.println("Le pieux " + (pieuxIndex + 1) + " est vide.");
         } else {
-          cardSelected = plateau.pioche.defausse.getSommetCard();
+          cardSelected = plateau.getPioche().getDefausse().getSommetCard();
 
           this.placerUneCarte(cardSelected);
-          plateau.pioche.defausse.pullCard();
+          plateau.getPioche().getDefausse().pullCard();
           System.out.println("Ajout avec succès dans le pieux " + (pieuxIndex + 1));
         }
 
       } else if (choix == 12) {
-        if (plateau.pioche.defausse.getLongueurPaquet() == 0) {
+        if (plateau.getPioche().getDefausse().getLongueurPaquet() == 0) {
           this.jouer();
           System.out.println("La défausse est vide.");
         } else {
-          cardSelected = plateau.pioche.defausse.getSommetCard();
+          cardSelected = plateau.getPioche().getDefausse().getSommetCard();
           this.placerUneCarte(cardSelected);
           System.out.println("Ajout avec succès");
         }
@@ -136,17 +136,17 @@ public class InterfaceConsole {
   private boolean placerUneCarte(Carte card) {
     this.afficherPlateau("=== PLATEAU ===: Placer la carte " + card);
     System.out.println("\nOù voulez-vous placer la carte -- " + card + " ?");
-    for (int i = 0; i < plateau.listColonne.size(); i++) { // boucle d'affichage des choix
-      if (!plateau.listColonne.get(i).getColonneVisible().isEmpty()) {
+    for (int i = 0; i < plateau.getNombreColonnes(); i++) { // boucle d'affichage des choix
+      if (!plateau.getColonne(i).estColonneVisibleVide()) {
         System.out.println((i + 1) + "- Colonne " + (i + 1) + " -- "
-            + plateau.listColonne.get(i).getColonneVisible().get(0));
+            + plateau.getColonne(i).getCarteVisibleAuSommet());
       } else {
         System.out.println((i + 1) + "- Colonne " + (i + 1) + " []");
       }
     }
-    for (int i = 0; i < plateau.listPieux.size(); i++) {
-      if (plateau.listPieux.get(i).getLongueurPaquet() > 0) {
-        System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- " + plateau.listPieux.get(i).getSommetCard());
+    for (int i = 0; i < plateau.getNombrePieux(); i++) {
+      if (plateau.getPieux(i).getLongueurPaquet() > 0) {
+        System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- " + plateau.getPieux(i).getSommetCard());
       } else {
         System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- []");
       }
@@ -157,15 +157,15 @@ public class InterfaceConsole {
 
     try {
       if (choix >= 1 && choix <= 7) {// placer dans une des colonnes
-        Colonne destination = plateau.listColonne.get(choix - 1);
-        if (!destination.getColonneVisible().isEmpty()
-            && card.estJusteEnDessousDe(destination.getColonneVisible().get(0))
-            && card.getCouleur() != destination.getColonneVisible().get(0).getCouleur()) {
+        Colonne destination = plateau.getColonne(choix - 1);
+        if (!destination.estColonneVisibleVide()
+            && card.estJusteEnDessousDe(destination.getCarteVisibleAuSommet())
+            && card.getCouleur() != destination.getCarteVisibleAuSommet().getCouleur()) {
           // Valider le déplacement avant de retirer la carte
-          plateau.listColonne.get(choix - 1).addCard(card);
+          plateau.getColonne(choix - 1).addCard(card);
 
-        } else if (destination.getColonneVisible().isEmpty() && card.getValeur() == Carte.valeurCarte.roi) {
-          plateau.listColonne.get(choix - 1).addCard(card);
+        } else if (destination.estColonneVisibleVide() && card.getValeur() == Carte.valeurCarte.roi) {
+          plateau.getColonne(choix - 1).addCard(card);
 
         }
 
@@ -177,7 +177,7 @@ public class InterfaceConsole {
         }
       } else if (choix >= 8 && choix <= 11) { // placer dans un des pieux
         int pieuxIndex = choix - 8;
-        plateau.listPieux.get(pieuxIndex).addCard(card);
+        plateau.getPieux(pieuxIndex).addCard(card);
 
         if (this.estVictoire()) {
           System.out.println("VICTOIRE !"); 
@@ -199,22 +199,22 @@ public class InterfaceConsole {
 
   private void prendreUneListeCartes() {
     System.out.println("\nQuel colonne voulez choisir pour prendre une liste de cartes ?");
-    for (int i = 0; i < plateau.listColonne.size(); i++) { // boucle d'affichage des choix
-      if (!plateau.listColonne.get(i).getColonneVisible().isEmpty()) {
-        System.out.println((i + 1) + "- Colonne " + (i + 1) + " -- " + plateau.listColonne.get(i).getColonneVisible());
+    for (int i = 0; i < plateau.getNombreColonnes(); i++) { // boucle d'affichage des choix
+      if (!plateau.getColonne(i).estColonneVisibleVide()) {
+        System.out.println((i + 1) + "- Colonne " + (i + 1) + " -- " + plateau.getColonne(i).toString());
       }
     }
     // ------------SCANNER
     // -----------------------------------------------------------------------------------------------
     int choixColonne = scanner.nextInt();
     try {
-      Colonne colonneSelected = plateau.listColonne.get(choixColonne - 1);
+      Colonne colonneSelected = plateau.getColonne(choixColonne - 1);
       System.out.println("Quelle carte de la colonne " + choixColonne + " voulez-vous prendre ?");
-      for (int j = 0; j < colonneSelected.getColonneVisible().size(); j++) {
-        System.out.println(j + 1 + "- " + colonneSelected.getColonneVisible().get(j));
+      for (int j = 0; j < colonneSelected.getTailleColonneVisible(); j++) {
+        System.out.println(j + 1 + "- " + colonneSelected.getCarteVisibleAt(j));
       }
       int choix2 = scanner.nextInt();
-      if (choix2 < 1 || choix2 > colonneSelected.getColonneVisible().size()) {
+      if (choix2 < 1 || choix2 > colonneSelected.getTailleColonneVisible()) {
         throw new IllegalArgumentException("choix invalide");
       } else {
         placerUneListeCartes(choixColonne - 1, choix2 - 1);
@@ -230,17 +230,17 @@ public class InterfaceConsole {
   private void placerUneListeCartes(int colSource, int indexDebut) {
     // Affichage des choix...
     System.out.println("------\nQuel colonne ou pieux voulez vous placer ?-------");
-    for (int i = 0; i < plateau.listColonne.size(); i++) { // boucle d'affichage des choix
-      if (!plateau.listColonne.get(i).getColonneVisible().isEmpty()) {
+    for (int i = 0; i < plateau.getNombreColonnes(); i++) { // boucle d'affichage des choix
+      if (!plateau.getColonne(i).estColonneVisibleVide()) {
         System.out.println((i + 1) + "- Colonne " + (i + 1) + " -- "
-            + plateau.listColonne.get(i).getColonneVisible().get(0));
+            + plateau.getColonne(i).getCarteVisibleAuSommet());
       } else {
         System.out.println((i + 1) + "- Colonne " + (i + 1) + " -- []");
       }
     }
-    for (int i = 0; i < plateau.listPieux.size(); i++) {
-      if (plateau.listPieux.get(0).getLongueurPaquet() > i) {
-        System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- " + plateau.listPieux.get(i).getSommetCard());
+    for (int i = 0; i < plateau.getNombrePieux(); i++) {
+      if (plateau.getPieux(0).getLongueurPaquet() > i) {
+        System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- " + plateau.getPieux(i).getSommetCard());
       } else {
         System.out.println((i + 8) + "- Pieux " + (i + 1) + " -- []");
       }
@@ -261,8 +261,8 @@ public class InterfaceConsole {
   }
 
   private boolean estVictoire() {
-    for (int i = 0; i < plateau.listPieux.size(); i++) {
-      if (plateau.listPieux.get(i).getLongueurPaquet() != (52 / 4)) {
+    for (int i = 0; i < plateau.getNombrePieux(); i++) {
+      if (plateau.getPieux(i).getLongueurPaquet() != (52 / 4)) {
         return false; 
       }
     }

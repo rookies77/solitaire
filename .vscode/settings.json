@@ -1,3 +1,21 @@
 {
-  "java.debug.settings.onBuildFailureProceed": true
+  "java.debug.settings.onBuildFailureProceed": true,
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Program Files\\Java\\jdk-21",
+      "default": true
+    }
+  ],
+  "java.project.sourcePaths": ["src"],
+  "java.project.outputPath": "bin",
+  "java.autobuild.enabled": true,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "triggerTaskOnSave.tasks": {
+    "Compiler tout le projet": [
+      "**/*.java"
+    ]
+  },
+  "triggerTaskOnSave.restart": true
 }

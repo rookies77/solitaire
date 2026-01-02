@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class TasMain {
 	private ArrayList<Carte> paquet;
 
-	public TasMain(ArrayList<Carte> paquet) {
-		this.paquet = new ArrayList<>(paquet);
+	public TasMain() {
+		this.paquet = new ArrayList<>();
 	}
 
 	public void addCard(Carte card) {

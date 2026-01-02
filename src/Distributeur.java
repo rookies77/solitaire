@@ -4,56 +4,37 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Distributeur extends TasMain {
-	Random random = new Random();
 
 	public Distributeur() {
-		super(creationPaquet());
-		this.melangerPaquet();
+		super(); // Crée un paquet vide
+		this.creerPaquetComplet(); // Ajoute les 52 cartes
+		this.melangerPaquet(); // Mélange
 	}
 
-	public static ArrayList<Carte> creationPaquet() {
-		ArrayList<Carte> listeCarte = new ArrayList<>();
+	private void creerPaquetComplet() {
+		// Crée les 52 cartes et les ajoute au paquet
 		for (Carte.valeurCarte vc : Carte.valeurCarte.values()) {
 			for (Carte.symboleCarte sc : Carte.symboleCarte.values()) {
-				listeCarte.add(new Carte(vc, sc));
+				this.addCard(new Carte(vc, sc));
 			}
 		}
-		return listeCarte;
 	}
 
 	public void melangerPaquet() {
+		Random random = new Random(); // Variable locale
 		ArrayList<Carte> temp = new ArrayList<>();
+		
+		// Vide le paquet dans une liste temporaire
 		while (this.getLongueurPaquet() > 0) {
-			try {
-				Carte card = this.pullCard();
-				temp.add(card);
-
-			} catch (IllegalArgumentException e) {
-				break;
-			}
-
+			Carte card = this.pullCard();
+			temp.add(card);
 		}
 
-		int index;
+		// Remet les cartes dans un ordre aléatoire
 		while (!temp.isEmpty()) {
-			index = random.nextInt(temp.size());
+			int index = random.nextInt(temp.size());
 			Carte retirerCardTemp = temp.remove(index);
 			this.addCard(retirerCardTemp);
 		}
-	}
-
-//	public Carte getRetirerCarte() {
-//		return this.pullCard();
-//	}
-
-
-	public ArrayList<Carte> getPaquetRestant() {
-		ArrayList<Carte> temp = new ArrayList<>();
-		while (this.getLongueurPaquet() > 0) {
-			Carte card = this.pullCard();
-			;
-			temp.add(0, card);
-		}
-		return temp;
 	}
 }

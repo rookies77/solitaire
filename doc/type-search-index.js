@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"interfaceGraphique","l":"ClickReporter"},{"p":"interfaceGraphique","l":"ICarte"},{"p":"interfaceGraphique","l":"InterfaceKlondike"},{"p":"interfaceGraphique","l":"UIKlondikeException"}]
