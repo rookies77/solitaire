@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.Arrays;
 import java.util.Random;
 import javax.swing.JButton;
 
@@ -10,12 +11,14 @@ public class Affichage9 implements ClickReporter {
 
   private InterfaceKlondike ik;
   Carte dos;
-  boolean found = false;
+  boolean columnSelected = false;
   Plateau plat;
   Carte carteSelectionnee;
+  Scanner scan;
   private boolean[] tasHighlighted = new boolean[13];
 
   public Affichage9() {
+    scan = new Scanner(System.in);
     this.init();
 
   }
@@ -23,145 +26,259 @@ public class Affichage9 implements ClickReporter {
   private void init() {
     this.dos = new Carte(null, null);
     ik = new InterfaceKlondike(this); // this implements ClickReporter
+    ik.addButton("Pile de carte");
     ik.addButton("Rejouer");
     ik.addButton("Abandonner");
     plat = new Plateau();
     Scanner scan = new Scanner(System.in);
 
     ik.addCard(dos, 0);
-    int nombreDeColonne = plat.getNombreColonnes();
-    for (int i = 1; i < nombreDeColonne; i++) {
-      // System.out.println("colonnes" + plat.getColonne(i));
-
-      for (int j = 1; j <= i; j++) {
-        ik.addCard(dos, i + 6);
-      }
-    }
-
-    for (int i = 0; i < 7; i++) {
-      Carte carteVisible = plat.getColonne(i).getCarteVisibleAuSommet();
-      if (carteVisible != null) {
-        ik.addCard(carteVisible, i + 6);
-      }
-    }
+    updateInterfaceByBack();
   }
 
   @Override
   public void reportClick(int ident) {
-    found = false;
-    for (int i = 0; i < tasHighlighted.length; i++) {
-      if (tasHighlighted[i] && i != ident) {
-        ik.setMessage(" autre tas déjà surligné dans la zone de texte sur la colonne " + i);
-        found = true;
-      }
-    }
+    // columnSelected = false;
 
-    System.out.println("apres boucle" + found);
-    afficheUneCarteEnPlus(ident);
-    if (ident != 0 && !found) {
+    System.out.println("tasHighlighted 1: " + Arrays.toString(tasHighlighted));
+    System.out.println("ident clicked: " + ident);
+    this.afficheUneCarteEnPlus(ident);
+    if (ident != 0 && !columnSelected) {
+      for (int i = 0; i < tasHighlighted.length; i++) {
+        if (tasHighlighted[i] && i != ident) {
+          ik.setHighlighted(i, false);
+          tasHighlighted[i] = false;
+          return;
+        }
+      }
       ik.clearMessage();
       tasHighlighted[ident] = !tasHighlighted[ident];
-
       ik.setHighlighted(ident, tasHighlighted[ident]);
+      columnSelected = true;
 
+    } else {
+      ik.clearMessage();
+      columnSelected = false;
+      this.resetHighlight();
+    }
+    System.out.println("tasHighlighted 2: " + Arrays.toString(tasHighlighted));
+  }
+
+  private void resetHighlight() {
+    for (int i = 0; i < tasHighlighted.length; i++) {
+      if (tasHighlighted[i]) {
+        ik.setHighlighted(i, false);
+        tasHighlighted[i] = false;
+      }
     }
   }
 
   private void afficheUneCarteEnPlus(int ident) {
-    System.out.println("Affiche une carte en plus, ident: " + ident);
-    if (ident == 0) {
-      if (plat.getPioche().getLongueurPaquet() == 0 && plat.getPioche().getDefausse().getLongueurPaquet() == 0) {
-        ik.setMessage("La pioche et la défausse sont vides");
-      }
-      Carte carteVisible = plat.getPioche().pullCardAndAddDefausse();
-      if (carteVisible != null) {
-        ik.addCard(carteVisible, 1);
-      }
-    }
-    System.out.println("Carte selectionnee remise a null" + found);
-    if (this.found) {
-      carteSelectionnee = null;
-      return;
-    }
     switch (ident) {
       case 0:
         if (plat.getPioche().getLongueurPaquet() == 0 && plat.getPioche().getDefausse().getLongueurPaquet() == 0) {
           ik.setMessage("La pioche et la défausse sont vides");
         }
-        Carte carteVisible = plat.getPioche().pullCardAndAddDefausse();
-        if (carteVisible != null) {
-          ik.addCard(carteVisible, 1);
-        }
+        plat.getPioche().pullCardAndAddDefausse();
+        this.resetHighlight();
         break;
       case 1:
-        if (!found)
+        if (!columnSelected)
           carteSelectionnee = plat.getPioche().getDefausse().getSommetCard();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // System.out.println("Carte selectionnee dans la defausse: " + carteSelectionnee + "found : " + found);
         break;
       case 2:
-        // ik.setHighlighted(ident, true);
-        break;
       case 3:
-        break;
       case 4:
-        break;
       case 5:
+        if (!columnSelected) {
+          carteSelectionnee = plat.getPieux(ident - 2).getSommetCard();
+        } else {
+          for (int i = 0; i < tasHighlighted.length; i++) {
+            if (tasHighlighted[i]) {
+              if (i == ident) {
+                ik.setMessage("Impossible de déplacer une carte sur elle-même !");
+                ik.setHighlighted(i, false);
+                tasHighlighted[i] = false;
+                continue;
+              }
+              if (this.peutDeplacerDansLePieux(carteSelectionnee, ident)) {
+                if (i == 1) {
+                  carteSelectionnee = plat.getPioche().getDefausse().pullCard();
+                } else if (i >= 2 && i <= 5) {
+
+                  carteSelectionnee = plat.getPieux(i - 2).pullCard();
+
+                } else if (i >= 6 && i <= 12) {
+                  Colonne source = plat.getColonne(i - 6);
+                  carteSelectionnee = source.pullCardColonneVisible();
+                  // Retourner une carte cachée si nécessaire
+                  if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
+                    source.updateColonneVisible();
+                  }
+                }
+                ik.setHighlighted(i, false);
+                tasHighlighted[i] = false;
+                plat.getPieux(ident - 2).addCard(carteSelectionnee);
+              }
+            }
+          }
+        }
+
         break;
       case 6:
-        if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
-        System.out.println("Colonne 6" + found);
-        break;
       case 7:
-           if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
-        break;
       case 8:
-           if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
-        break;
       case 9:
-           if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
-        break;
       case 10:
-           if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
-        break;
       case 11:
-           if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
-        break;
       case 12:
-           if (!found)
-          carteSelectionnee = plat.getColonne(ident-6).getCarteVisibleAuSommet();
-        else
-          ik.addCard(carteSelectionnee, ident);
-        // ik.setHighlighted(ident, true);
+        if (!columnSelected) {
+          Colonne col = plat.getColonne(ident - 6);
+          if (!col.estColonneVisibleVide()) {
+            carteSelectionnee = col.getCarteVisibleAuSommet();
+            System.out.println("Carte selectionnee  " + carteSelectionnee + " columnSelected : " + columnSelected);
+          } else {
+            ik.setMessage("Cette colonne est vide !");
+          }
+        } else if (this.peutDeplacerDansLaColonne(carteSelectionnee, ident)) {
+          for (int i = 0; i < tasHighlighted.length; i++) {
+            if (tasHighlighted[i]) {
+
+              if (i == ident) {
+                ik.setMessage("Impossible de déplacer une carte sur elle-même !");
+                ik.setHighlighted(i, false);
+                tasHighlighted[i] = false;
+                continue;
+              }
+
+              if (i == 1) {
+                carteSelectionnee = plat.getPioche().getDefausse().pullCard();
+              } else if (i >= 2 && i <= 5) {
+                carteSelectionnee = plat.getPieux(i - 2).pullCard();
+
+              } else if (i >= 6 && i <= 12) {
+                Colonne source = plat.getColonne(i - 6);
+                carteSelectionnee = source.pullCardColonneVisible();
+                // Retourner une carte cachée si nécessaire
+                if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
+                  source.updateColonneVisible();
+                }
+              }
+              ik.setHighlighted(i, false);
+              tasHighlighted[i] = false;
+              plat.getColonne(ident - 6).addCard(carteSelectionnee);
+            }
+          }
+        }
+
         break;
       default:
         break;
     }
+
+    updateInterfaceByBack();
+  }
+
+  private boolean peutDeplacerDansLePieux(Carte card, int ident) {
+    if (columnSelected) {
+      Pieux destination = plat.getPieux(ident - 2);
+      if (destination.getLongueurPaquet() == 0) {
+        if (card.getValeur() == Carte.valeurCarte.as) {
+          return true;
+        } else {
+          ik.setMessage("Le pieux est vide, seule un as peut y être placé !");
+          return false;
+        }
+      }
+      if (destination.getLongueurPaquet() > 0) {
+        Carte lastCard = destination.getSommetCard();
+        if (lastCard.precedeMemeCouleur(card)) {
+          return true;
+        } else {
+          ik.setMessage("La carte ne peut pas être placée sur le pieux !");
+          return false;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean peutDeplacerDansLaColonne(Carte card, int ident) {
+    if (columnSelected) {
+      Colonne destination = plat.getColonne(ident - 6);
+      // Vérifier si le déplacement est valide, mais NE PAS ajouter la carte ici
+      if (!destination.estColonneVisibleVide()
+          && card.estJusteEnDessousDe(destination.getCarteVisibleAuSommet())
+          && card.getCouleur() != destination.getCarteVisibleAuSommet().getCouleur()) {
+        return true; // Déplacement valide
+
+      } else if (destination.estColonneVisibleVide() && card.getValeur() == Carte.valeurCarte.roi) {
+        return true; // Déplacement valide (roi sur colonne vide)
+
+      } else {
+        ik.setMessage("Déplacement invalide !");
+        return false; // Déplacement invalide
+      }
+    } else {
+      return false;
+    }
+
+  }
+
+  private void updateInterfaceByBack() {
+    for (int i = 0; i < plat.getNombreColonnes(); i++) { // Affiche les cartes dans les colonnes
+      int longueurDuPaquet = plat.getColonne(i).getLongueurPaquet();
+      int tailleColonneVisible = plat.getColonne(i).getTailleColonneVisible();
+      Carte[] cartes = new Carte[longueurDuPaquet + tailleColonneVisible];
+
+      // Ajouter les cartes visibles
+      for (int j = 0; j < tailleColonneVisible; j++) {
+        cartes[j] = plat.getColonne(i).getCarteVisibleAt(j);
+      }
+
+      // Ajouter les cartes cachées (dos)
+      for (int j = 0; j < longueurDuPaquet; j++) {
+        cartes[tailleColonneVisible + j] = dos;
+      }
+
+      ik.setCards(cartes, i + 6);
+    }
+
+    for (int i = 0; i < plat.getNombrePieux(); i++) { // Affiche les cartes dans les pieux
+      Carte carte = plat.getPieux(i).getSommetCard();
+      if (carte != null) {
+        ik.setCard(carte, i + 2);
+      } else {
+        ik.clear(i + 2);
+      }
+    }
+    Carte card = plat.getPioche().getDefausse().getSommetCard(); // Affichage de la carte au sommet de la défausse
+    if (card != null) {
+      ik.setCard(card, 1);
+    } else {
+      ik.clear(1);
+    }
+  }
+
+  private void prendreUneListeDeCarte(String message) {
+    ik.setMessage(message);
+    Colonne source = null; // ← Initialiser à null
+    for (int i = 0; i < tasHighlighted.length; i++) {
+      if (tasHighlighted[i]) {
+        source = plat.getColonne(i - 6);
+        System.out.println("Déplacement de la carte choisie vers le tas " + source);
+        System.out.println("Déplacement de la carte choisie vers le tas " + source.getColonneVisibleInterne());
+      }
+    }
+
+    if (source != null) { // ← Vérifier que source existe
+      System.out.println("Sélectionnez une carte parmi les suivantes :");
+      for (int i = 0; i < source.getTailleColonneVisible(); i++) {
+        System.out.println((i ) + " : -> " + source.getCarteVisibleAt(i));
+      }
+    }
+    int choix = scan.nextInt(); 
+
   }
 
   @Override
@@ -174,6 +291,15 @@ public class Affichage9 implements ClickReporter {
     } else if (identifier.equals("Abandonner")) {
       ik.setMessage("Abandonner la partie");
       ik.close();
+    } else if (identifier.equals("Pile de carte")) {
+
+      if (!columnSelected) {
+        ik.setMessage("Veuillez selectionner une colonne avant ");
+        return;
+      }
+      prendreUneListeDeCarte(
+          "Choisir dans la console du terminal");
+
     }
 
   }

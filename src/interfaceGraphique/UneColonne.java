@@ -22,7 +22,7 @@ class UneColonne extends EnsembleCarte{
 
 	@Override
 	public void add(ICarte st) {
-		System.out.println("uneColonne nom fichier : "+st.getNomDeFichierPNG());
+		// System.out.println("uneColonne nom fichier : "+st.getNomDeFichierPNG());
 		tab.add(0,ic.getIconFromCard(st));
 		this.repaint();
 	}
@@ -67,7 +67,7 @@ class UneColonne extends EnsembleCarte{
 			y = 30+tab.size()*25+95;		
 		g.drawString(""+this.aff, 35, 20);	
 		for (int i=tab.size()-1, j=0; i>=0; i--, j++) {
-			System.out.println("uneColonne icon "+tab.get(i));
+			// System.out.println("uneColonne icon "+tab.get(i));
 			tab.get(i).paintIcon(this,g,0,30+j*25);	
 			if (this.highlighted)
 				jaune.paintIcon(this,g,0,30+j*25);	

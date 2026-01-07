@@ -34,7 +34,7 @@ abstract class EnsembleCarte extends JPanel {
 	class LaSouris extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			System.out.println("click sur la colonne n° : " + ref + " mouseevent " );
+			// System.out.println("click sur la colonne n° : " + ref + " mouseevent " );
 			if (reporter != null){
 				reporter.reportClick(ref);
 			}

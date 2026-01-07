@@ -19,7 +19,7 @@ public class Pieux extends TasMain{
 			Carte lastCarte = this.getSommetCard();
 			if(lastCarte.precedeMemeCouleur(card)) {
 				super.addCard(card);
-				System.out.println("on Ajoute dans le pieux du symbole" + card.getSymbole());
+				System.out.println("on Ajoute dans le pieux numero " + card.getValeur() +" " +card.getSymbole());
 			}else {
 				throw new IllegalArgumentException("Carte " + card + " ne peut pas suivre " + lastCarte + " dans ce pieux");
 			}
