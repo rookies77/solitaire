@@ -1,7 +1,9 @@
 import java.util.Scanner;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
-import javax.swing.JButton;
+import java.util.List;
+
+import javax.swing.JOptionPane;
 
 import interfaceGraphique.ClickReporter;
 import interfaceGraphique.InterfaceKlondike;
@@ -12,6 +14,9 @@ public class Affichage9 implements ClickReporter {
   private InterfaceKlondike ik;
   Carte dos;
   boolean columnSelected = false;
+  boolean listCardsSelected = false;
+  Carte lastCardofList;
+  ArrayList<Carte> listeDesCartesSelectionnees = new ArrayList<>();
   Plateau plat;
   Carte carteSelectionnee;
   Scanner scan;
@@ -30,7 +35,6 @@ public class Affichage9 implements ClickReporter {
     ik.addButton("Rejouer");
     ik.addButton("Abandonner");
     plat = new Plateau();
-    Scanner scan = new Scanner(System.in);
 
     ik.addCard(dos, 0);
     updateInterfaceByBack();
@@ -38,10 +42,6 @@ public class Affichage9 implements ClickReporter {
 
   @Override
   public void reportClick(int ident) {
-    // columnSelected = false;
-
-    System.out.println("tasHighlighted 1: " + Arrays.toString(tasHighlighted));
-    System.out.println("ident clicked: " + ident);
     this.afficheUneCarteEnPlus(ident);
     if (ident != 0 && !columnSelected) {
       for (int i = 0; i < tasHighlighted.length; i++) {
@@ -61,7 +61,6 @@ public class Affichage9 implements ClickReporter {
       columnSelected = false;
       this.resetHighlight();
     }
-    System.out.println("tasHighlighted 2: " + Arrays.toString(tasHighlighted));
   }
 
   private void resetHighlight() {
@@ -120,6 +119,10 @@ public class Affichage9 implements ClickReporter {
                 tasHighlighted[i] = false;
                 plat.getPieux(ident - 2).addCard(carteSelectionnee);
               }
+              if (this.estVictoire()) {
+                System.out.println("VICTOIRE !");
+                System.exit(0); // Arrete le jeu
+              }
             }
           }
         }
@@ -136,11 +139,10 @@ public class Affichage9 implements ClickReporter {
           Colonne col = plat.getColonne(ident - 6);
           if (!col.estColonneVisibleVide()) {
             carteSelectionnee = col.getCarteVisibleAuSommet();
-            System.out.println("Carte selectionnee  " + carteSelectionnee + " columnSelected : " + columnSelected);
           } else {
             ik.setMessage("Cette colonne est vide !");
           }
-        } else if (this.peutDeplacerDansLaColonne(carteSelectionnee, ident)) {
+        } else if (this.peutDeplacerUneCarteDansLaColonne(carteSelectionnee, ident) && !listCardsSelected) {
           for (int i = 0; i < tasHighlighted.length; i++) {
             if (tasHighlighted[i]) {
 
@@ -169,6 +171,37 @@ public class Affichage9 implements ClickReporter {
               plat.getColonne(ident - 6).addCard(carteSelectionnee);
             }
           }
+        } else if (listCardsSelected && this.peutDeplacerUneListeDansLaColonne(listeDesCartesSelectionnees, ident)) {
+          System.out.println("Déplacement POSSIBLE" + ident);
+
+          for (int i = 0; i < tasHighlighted.length; i++) {
+            if (tasHighlighted[i]) {
+              if (i == ident) {
+                ik.setMessage("Impossible de déplacer une carte sur elle-même !");
+                ik.setHighlighted(i, false);
+                tasHighlighted[i] = false;
+                continue;
+              }
+              Colonne source = plat.getColonne(i - 6);
+              List<Carte> cardToMove = new ArrayList<>();
+              for (int j = 0; j < listeDesCartesSelectionnees.size(); j++) {
+                cardToMove.add(source.pullCardColonneVisible());
+              }
+              System.out.println("Cartes à déplacer : " + (ident - 6));
+              System.out.println("cardToMove : " + cardToMove);
+              Colonne destination = plat.getColonne(ident - 6);
+              destination.addListCard(cardToMove);
+              listCardsSelected = false;
+              listeDesCartesSelectionnees.clear();
+              ik.setHighlighted(i, false);
+              tasHighlighted[i] = false;
+              if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
+                source.updateColonneVisible();
+              }
+            }
+          }
+        } else {
+          ik.setMessage("Déplacement invalide !");
         }
 
         break;
@@ -203,7 +236,7 @@ public class Affichage9 implements ClickReporter {
     return false;
   }
 
-  private boolean peutDeplacerDansLaColonne(Carte card, int ident) {
+  private boolean peutDeplacerUneCarteDansLaColonne(Carte card, int ident) {
     if (columnSelected) {
       Colonne destination = plat.getColonne(ident - 6);
       // Vérifier si le déplacement est valide, mais NE PAS ajouter la carte ici
@@ -222,6 +255,13 @@ public class Affichage9 implements ClickReporter {
     } else {
       return false;
     }
+
+  }
+
+  private boolean peutDeplacerUneListeDansLaColonne(List<Carte> listCard, int ident) {
+    System.out.println("Vérification listCard" + listCard);
+    Colonne destination = plat.getColonne(ident - 6);
+    return destination.canAddListCardFromColonne(listCard);
 
   }
 
@@ -266,19 +306,32 @@ public class Affichage9 implements ClickReporter {
     for (int i = 0; i < tasHighlighted.length; i++) {
       if (tasHighlighted[i]) {
         source = plat.getColonne(i - 6);
-        System.out.println("Déplacement de la carte choisie vers le tas " + source);
-        System.out.println("Déplacement de la carte choisie vers le tas " + source.getColonneVisibleInterne());
       }
     }
 
+    String listeDesCartes = "";
     if (source != null) { // ← Vérifier que source existe
       System.out.println("Sélectionnez une carte parmi les suivantes :");
       for (int i = 0; i < source.getTailleColonneVisible(); i++) {
-        System.out.println((i ) + " : -> " + source.getCarteVisibleAt(i));
+        listeDesCartes += i + " : " + source.getCarteVisibleAt(i) + "\n";
       }
     }
-    int choix = scan.nextInt(); 
+    // int choix = scan.nextInt();
+    // APRÈS :
+    String input = JOptionPane.showInputDialog(
+        null,
+        "Sélectionnez un index " + "\n" + listeDesCartes,
+        "Choix de carte",
+        JOptionPane.QUESTION_MESSAGE);
+    int choix = Integer.parseInt(input);
 
+    System.out.println(choix + " : -> " + source.getCarteVisibleAt(choix));
+    lastCardofList = source.getCarteVisibleAt(choix);
+    listCardsSelected = true;
+
+    for (int i = 0; i <= choix; i++) {
+      listeDesCartesSelectionnees.add(source.getCarteVisibleAt(i));
+    }
   }
 
   @Override
@@ -294,7 +347,7 @@ public class Affichage9 implements ClickReporter {
     } else if (identifier.equals("Pile de carte")) {
 
       if (!columnSelected) {
-        ik.setMessage("Veuillez selectionner une colonne avant ");
+        ik.setMessage("Veuillez jusqu'a quelle carte prendre ");
         return;
       }
       prendreUneListeDeCarte(
@@ -302,6 +355,16 @@ public class Affichage9 implements ClickReporter {
 
     }
 
+  }
+
+  private boolean estVictoire() {
+    for (int i = 0; i < plat.getNombrePieux(); i++) {
+      if (plat.getPieux(i).getLongueurPaquet() != (52 / 4)) {
+        return false;
+      }
+    }
+    System.out.println("Vous avez gagné !");
+    return true;
   }
 
   public static void main(String[] args) {
