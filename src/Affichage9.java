@@ -121,7 +121,8 @@ public class Affichage9 implements ClickReporter {
               }
               if (this.estVictoire()) {
                 System.out.println("VICTOIRE !");
-                System.exit(0); // Arrete le jeu
+                JOptionPane.showMessageDialog(null, "Félicitations ! Vous avez gagné la partie !");
+
               }
             }
           }
@@ -171,37 +172,47 @@ public class Affichage9 implements ClickReporter {
               plat.getColonne(ident - 6).addCard(carteSelectionnee);
             }
           }
-        } else if (listCardsSelected && this.peutDeplacerUneListeDansLaColonne(listeDesCartesSelectionnees, ident)) {
-          System.out.println("Déplacement POSSIBLE" + ident);
-
+        } else if (listCardsSelected) {
+          boolean memeColonne = false;
           for (int i = 0; i < tasHighlighted.length; i++) {
             if (tasHighlighted[i]) {
               if (i == ident) {
-                ik.setMessage("Impossible de déplacer une carte sur elle-même !");
+
+                // ik.setMessage("Impossible de déplacer une carte sur elle-même !");
                 ik.setHighlighted(i, false);
                 tasHighlighted[i] = false;
+                memeColonne = true;
+                listeDesCartesSelectionnees.clear();
                 continue;
               }
-              Colonne source = plat.getColonne(i - 6);
-              List<Carte> cardToMove = new ArrayList<>();
-              for (int j = 0; j < listeDesCartesSelectionnees.size(); j++) {
-                cardToMove.add(source.pullCardColonneVisible());
+              if (memeColonne) {
+                ik.setMessage("Impossible de déplacer sur la même colonne !");
+                return; // ← Ou ne rien faire
               }
-              System.out.println("Cartes à déplacer : " + (ident - 6));
-              System.out.println("cardToMove : " + cardToMove);
-              Colonne destination = plat.getColonne(ident - 6);
-              destination.addListCard(cardToMove);
-              listCardsSelected = false;
-              listeDesCartesSelectionnees.clear();
-              ik.setHighlighted(i, false);
-              tasHighlighted[i] = false;
-              if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
-                source.updateColonneVisible();
+              if (this.peutDeplacerUneListeDansLaColonne(listeDesCartesSelectionnees, ident)) {
+                Colonne source = plat.getColonne(i - 6);
+                List<Carte> cardToMove = new ArrayList<>();
+
+                for (int j = 0; j < listeDesCartesSelectionnees.size(); j++) {
+                  cardToMove.add(source.pullCardColonneVisible());
+                }
+                System.out.println("Cartes à déplacer : " + (ident - 6));
+                System.out.println("cardToMove : " + cardToMove);
+                Colonne destination = plat.getColonne(ident - 6);
+                destination.addListCard(cardToMove);
+                listCardsSelected = false;
+                listeDesCartesSelectionnees.clear();
+                ik.setHighlighted(i, false);
+                tasHighlighted[i] = false;
+                if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
+                  source.updateColonneVisible();
+                }
+              } else {
+                ik.setMessage("Déplacement invalide !");
               }
+
             }
           }
-        } else {
-          ik.setMessage("Déplacement invalide !");
         }
 
         break;
@@ -259,7 +270,6 @@ public class Affichage9 implements ClickReporter {
   }
 
   private boolean peutDeplacerUneListeDansLaColonne(List<Carte> listCard, int ident) {
-    System.out.println("Vérification listCard" + listCard);
     Colonne destination = plat.getColonne(ident - 6);
     return destination.canAddListCardFromColonne(listCard);
 
@@ -298,6 +308,12 @@ public class Affichage9 implements ClickReporter {
     } else {
       ik.clear(1);
     }
+
+    if (plat.getPioche().getLongueurPaquet() > 0) { // Affichage de la pioche
+      ik.setCard(dos, 0);
+    } else {
+      ik.clear(0);
+    }
   }
 
   private void prendreUneListeDeCarte(String message) {
@@ -313,25 +329,44 @@ public class Affichage9 implements ClickReporter {
     if (source != null) { // ← Vérifier que source existe
       System.out.println("Sélectionnez une carte parmi les suivantes :");
       for (int i = 0; i < source.getTailleColonneVisible(); i++) {
-        listeDesCartes += i + " : " + source.getCarteVisibleAt(i) + "\n";
+        listeDesCartes += i + " : =>  " + source.getCarteVisibleAt(i) + "\n";
       }
     }
-    // int choix = scan.nextInt();
-    // APRÈS :
+
     String input = JOptionPane.showInputDialog(
         null,
         "Sélectionnez un index " + "\n" + listeDesCartes,
         "Choix de carte",
         JOptionPane.QUESTION_MESSAGE);
-    int choix = Integer.parseInt(input);
 
-    System.out.println(choix + " : -> " + source.getCarteVisibleAt(choix));
-    lastCardofList = source.getCarteVisibleAt(choix);
-    listCardsSelected = true;
-
-    for (int i = 0; i <= choix; i++) {
-      listeDesCartesSelectionnees.add(source.getCarteVisibleAt(i));
+    if (input == null || input.isEmpty()) { // si champs vide ou annulation
+      ik.setMessage("Aucun index sélectionné.");
+      columnSelected = false;
+      this.resetHighlight();
+      return;
     }
+    try {
+      int choix = Integer.parseInt(input);
+      if (choix < 0 || choix >= source.getTailleColonneVisible()) {
+        ik.setMessage("Index hors limites. Veuillez choisir un index valide.");
+        columnSelected = false;
+        this.resetHighlight();
+        return;
+      }
+      System.out.println(choix + " : -> " + source.getCarteVisibleAt(choix));
+      lastCardofList = source.getCarteVisibleAt(choix);
+      listCardsSelected = true;
+
+      for (int i = 0; i <= choix; i++) {
+        listeDesCartesSelectionnees.add(source.getCarteVisibleAt(i));
+      }
+    } catch (NumberFormatException e) {
+      ik.setMessage("Entrée invalide. Veuillez entrer un nombre valide.");
+      columnSelected = false;
+      this.resetHighlight();
+      return;
+    }
+
   }
 
   @Override
@@ -351,7 +386,7 @@ public class Affichage9 implements ClickReporter {
         return;
       }
       prendreUneListeDeCarte(
-          "Choisir dans la console du terminal");
+          "- Choisir une carte par son index : " + "\n" + "- Puis cliquer sur la colonne de destination");
 
     }
 
@@ -363,7 +398,6 @@ public class Affichage9 implements ClickReporter {
         return false;
       }
     }
-    System.out.println("Vous avez gagné !");
     return true;
   }
 
