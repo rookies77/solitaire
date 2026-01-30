@@ -47,7 +47,7 @@ public class Colonne extends TasMain {
 	protected void addListCard(List<Carte> listCardExt) {
 		Carte derniereCarteDuPaquet = listCardExt.get(listCardExt.size() - 1);
 		System.out.println("Derniere carte du paquet à ajouter : " + derniereCarteDuPaquet);
-		
+
 		// Vérifier AVANT d'accéder à l'index 0
 		if (this.colonneVisible.isEmpty()) {
 			if (derniereCarteDuPaquet.getValeur() == Carte.valeurCarte.roi) {
@@ -127,7 +127,8 @@ public class Colonne extends TasMain {
 		return this.colonneVisible;
 	}
 
-	public void updateColonneVisible() { // si la colonnevisible est vide, elle prend une carte de la pioche
+	public void updateColonneVisible() {
+		// si la colonnevisible est vide, elle prend une carte de la pioche
 		if (this.getLongueurPaquet() != 0) {
 			Carte carteSommetColonneCachee = this.pullCard();
 			this.colonneVisible.add(0, carteSommetColonneCachee);

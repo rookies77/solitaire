@@ -17,7 +17,7 @@ public class Carte implements ICarte {
 		}
 
 		public String getNom() {
-			return this.nom;
+			return this.nom; // récupere le nom de la carte pour lui ajouter .png qui permettra d'avoir le nom du fichier image
 		}
 	}
 

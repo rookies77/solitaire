@@ -1,18 +1,17 @@
 // Vincent WONG 2025
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Plateau {
 	private Distributeur dist = new Distributeur();
 	private Pioche pioche;
-	private ArrayList<Colonne> listColonne = new ArrayList<>();
-	private ArrayList<Pieux> listPieux = new ArrayList<>();
+	private ArrayList<Colonne> listColonne = new ArrayList<>(7);
+	private ArrayList<Pieux> listPieux = new ArrayList<>(4);
 
 	public Plateau() {
-		this.distribColonnes();
+		this.distribColonnes(); // distribution des cartes dans les colonnes
 
-		pioche = new Pioche(dist);
+		pioche = new Pioche(dist); // le reste des cartes dans la pioche
 		this.listPieux.add(new Pieux());
 		this.listPieux.add(new Pieux());
 		this.listPieux.add(new Pieux());
@@ -43,7 +42,6 @@ public class Plateau {
 		throw new IndexOutOfBoundsException("Index de pieux invalide: " + index);
 	}
 
-	// Accès à la pioche
 	public Pioche getPioche() {
 		return this.pioche;
 	}
@@ -58,66 +56,5 @@ public class Plateau {
 			this.listColonne.add(new Colonne(ListCard));
 		}
 
-	}
-
-	protected void addDefausseIntoColonne(int indexColonne) {
-		Carte DefausseCard = pioche.getDefausse().getSommetCard();
-		Colonne colonneCible = this.listColonne.get(indexColonne);
-
-		try {
-			colonneCible.addCard(DefausseCard);
-			pioche.getDefausse().pullCard();
-		} catch (Exception e) {
-			throw e;
-		}
-	}
-
-	protected boolean peutDeplacerListeCarte(int colSource, int indexDebut, int colDestination) {
-		try {
-			Colonne source = listColonne.get(colSource);
-			Colonne destination = listColonne.get(colDestination);
-			List<Carte> cartesADeplacer = new ArrayList<>();
-			for (int i = indexDebut; i < source.getTailleColonneVisible(); i++) {
-				cartesADeplacer.add(source.getCarteVisibleAt(i));
-			}
-
-			if (!destination.canAddListCardFromColonne(cartesADeplacer)) {
-				return false;
-			}
-			destination.addListCard(cartesADeplacer);
-			for (int i = source.getTailleColonneVisible() - 1; i >= indexDebut; i--) {
-				source.getColonneVisibleInterne().remove(i);
-			}
-			if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
-				source.updateColonneVisible();
-			}
-
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
-
-	public boolean deplacerCarteVersPieux(int colSource, int indexPieux) {
-		try {
-			Colonne source = listColonne.get(colSource);
-			Pieux pieux = listPieux.get(indexPieux);
-
-			if (source.estColonneVisibleVide())
-				return false;
-
-			Carte carte = source.getCarteVisibleAuSommet();
-			pieux.addCard(carte);
-			source.pullCardColonneVisible();
-
-			if (source.estColonneVisibleVide() && source.getLongueurPaquet() > 0) {
-				source.updateColonneVisible();
-			}
-
-			return true;
-
-		} catch (Exception e) {
-			return false;
-		}
 	}
 }
